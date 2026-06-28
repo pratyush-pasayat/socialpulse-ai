@@ -5,6 +5,7 @@ import SentimentChart from "./components/SentimentChart";
 import ResultsTable from "./components/ResultsTable";
 import SummaryCards from "./components/SummaryCards";
 import SentimentBarChart from "./components/BarChart";
+import SearchHistory from "./components/SearchHistory";
 
 export default function Home() {
   const [topic, setTopic] = useState("");
@@ -12,14 +13,16 @@ export default function Home() {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState("");
 
-  const analyze = async () => {
-    if (!topic.trim()) return;
+  const analyze = async (searchTopic?: string) => {
+    const t = searchTopic || topic;
+    if (!t.trim()) return;
+    setTopic(t);
     setLoading(true);
     setError("");
     setData(null);
     try {
       const res = await axios.get(`http://localhost:8000/analyze`, {
-        params: { topic, max_results: 10 },
+        params: { topic: t, max_results: 10 },
       });
       setData(res.data);
     } catch (err) {
@@ -43,7 +46,7 @@ export default function Home() {
         </div>
 
         {/* Search Bar */}
-        <div className="flex gap-3 mb-8">
+        <div className="flex gap-3 mb-4">
           <input
             type="text"
             value={topic}
@@ -53,13 +56,16 @@ export default function Home() {
             className="flex-1 px-5 py-4 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 text-lg"
           />
           <button
-            onClick={analyze}
+            onClick={() => analyze()}
             disabled={loading}
             className="px-8 py-4 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:opacity-50 font-semibold text-lg transition-all"
           >
             {loading ? "Analyzing..." : "Analyze"}
           </button>
         </div>
+
+        {/* Search History */}
+        <SearchHistory onSelect={(t) => analyze(t)} />
 
         {/* Error */}
         {error && (
@@ -70,7 +76,7 @@ export default function Home() {
         {loading && (
           <div className="flex flex-col items-center justify-center py-20 space-y-6">
             <div className="flex gap-3">
-              {["📡", "🧠", "✍️"].map((emoji, i) => (
+              {["📡", "🧠", "✍️", "💾"].map((emoji, i) => (
                 <div
                   key={i}
                   className="text-3xl animate-bounce"
@@ -82,7 +88,7 @@ export default function Home() {
             </div>
             <div className="space-y-2 text-center">
               <p className="text-purple-400 font-semibold text-lg">AI Agents Working...</p>
-              <p className="text-gray-500 text-sm">Fetching → Analyzing → Summarizing</p>
+              <p className="text-gray-500 text-sm">Fetching → Analyzing → Summarizing → Saving</p>
             </div>
             <div className="flex gap-2">
               {[0, 1, 2, 3, 4].map((i) => (
