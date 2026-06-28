@@ -4,6 +4,7 @@ from groq import Groq
 from tools.news_tool import fetch_news
 from tools.hackernews_tool import fetch_hackernews
 from agents.sentiment_agent import analyze_sentiment
+from tools.supabase_tool import save_search
 
 load_dotenv()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -51,6 +52,7 @@ def run_pipeline(topic: str, max_results: int = 10) -> dict:
     1. Fetcher Agent: pulls data from NewsAPI + HackerNews
     2. Sentiment Agent: analyzes each item with Groq
     3. Summary Agent: generates AI narrative
+    4. Storage Agent: saves to Supabase
     """
     
     print(f"\n🔍 Starting SocialPulse pipeline for topic: '{topic}'")
@@ -108,11 +110,17 @@ def run_pipeline(topic: str, max_results: int = 10) -> dict:
     print("✍️  Summary Agent: generating narrative...")
     ai_summary = generate_ai_summary(topic, analyzed_items, summary)
     print(f"   ✅ Summary generated")
-    
-    return {
+
+    result = {
         "topic": topic,
         "total": len(analyzed_items),
         "items": analyzed_items,
         "ai_summary": ai_summary,
         "summary": summary,
     }
+    
+    # ── Agent 4: Save to Supabase ────────────────────────
+    print("💾 Storage Agent: saving to Supabase...")
+    save_search(topic, result)
+    
+    return result
