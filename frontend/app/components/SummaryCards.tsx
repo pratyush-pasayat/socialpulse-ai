@@ -1,4 +1,4 @@
-export default function SummaryCards({ summary, topic, total }: any) {
+export default function SummaryCards({ summary, topic, total, aiSummary }: any) {
   const cards = [
     { label: "Total Analyzed", value: total, color: "text-white", bg: "bg-gray-800" },
     { label: "Positive", value: summary.positive, color: "text-green-400", bg: "bg-gray-800 border border-green-400/20" },
@@ -7,10 +7,12 @@ export default function SummaryCards({ summary, topic, total }: any) {
   ];
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4 text-gray-300">
+    <div className="space-y-4">
+      <h2 className="text-xl font-semibold text-gray-300">
         Results for: <span className="text-purple-400">"{topic}"</span>
       </h2>
+
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {cards.map((card) => (
           <div key={card.label} className={`${card.bg} rounded-xl p-4 text-center`}>
@@ -19,7 +21,9 @@ export default function SummaryCards({ summary, topic, total }: any) {
           </div>
         ))}
       </div>
-      <div className="mt-4 flex gap-4">
+
+      {/* Dominant badges */}
+      <div className="flex gap-4">
         <div className="bg-gray-800 rounded-xl px-4 py-2 text-sm">
           Dominant Sentiment: <span className="text-purple-400 font-semibold capitalize">{summary.dominant_sentiment}</span>
         </div>
@@ -27,6 +31,17 @@ export default function SummaryCards({ summary, topic, total }: any) {
           Dominant Emotion: <span className="text-cyan-400 font-semibold capitalize">{summary.dominant_emotion}</span>
         </div>
       </div>
+
+      {/* AI Summary */}
+      {aiSummary && (
+        <div className="bg-gray-800 border border-purple-500/30 rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-purple-400 text-lg">🤖</span>
+            <h3 className="text-purple-400 font-semibold">AI Intelligence Summary</h3>
+          </div>
+          <p className="text-gray-300 leading-relaxed">{aiSummary}</p>
+        </div>
+      )}
     </div>
   );
 }

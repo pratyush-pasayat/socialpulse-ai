@@ -73,7 +73,7 @@ export default function Home() {
         {/* Results */}
         {data && (
           <div className="space-y-8">
-            <SummaryCards summary={data.summary} topic={data.topic} total={data.total} />
+            <SummaryCards summary={data.summary} topic={data.topic} total={data.total} aiSummary={data.ai_summary} />
             <SentimentChart summary={data.summary} />
             <ResultsTable items={data.items} />
           </div>
