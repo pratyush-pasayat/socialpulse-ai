@@ -10,12 +10,12 @@ def fetch_news(topic: str, days_back: int = 1, max_results: int = 20) -> list[di
     from_date = (datetime.now() - timedelta(days=days_back)).strftime("%Y-%m-%d")
 
     params = {
-        "q": topic,
-        "from": from_date,
-        "sortBy": "publishedAt",
-        "language": "en",
-        "pageSize": max_results,
-        "apiKey": NEWS_API_KEY,
+    "q": f'"{topic}"',  # exact match with quotes
+    "from": from_date,
+    "sortBy": "relevancy",  # changed from publishedAt to relevancy
+    "language": "en",
+    "pageSize": max_results,
+    "apiKey": NEWS_API_KEY,
     }
 
     response = requests.get(url, params=params)
