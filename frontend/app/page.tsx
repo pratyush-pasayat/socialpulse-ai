@@ -6,6 +6,7 @@ import ResultsTable from "./components/ResultsTable";
 import SummaryCards from "./components/SummaryCards";
 import SentimentBarChart from "./components/BarChart";
 import SearchHistory from "./components/SearchHistory";
+import Keywords from "./components/Keywords";
 
 export default function Home() {
   const [topic, setTopic] = useState("");
@@ -76,7 +77,7 @@ export default function Home() {
         {loading && (
           <div className="flex flex-col items-center justify-center py-20 space-y-6">
             <div className="flex gap-3">
-              {["📡", "🧠", "✍️", "💾"].map((emoji, i) => (
+              {["📡", "🧠", "✍️", "🔑", "💾"].map((emoji, i) => (
                 <div
                   key={i}
                   className="text-3xl animate-bounce"
@@ -88,7 +89,7 @@ export default function Home() {
             </div>
             <div className="space-y-2 text-center">
               <p className="text-purple-400 font-semibold text-lg">AI Agents Working...</p>
-              <p className="text-gray-500 text-sm">Fetching → Analyzing → Summarizing → Saving</p>
+              <p className="text-gray-500 text-sm">Fetching → Analyzing → Summarizing → Extracting → Saving</p>
             </div>
             <div className="flex gap-2">
               {[0, 1, 2, 3, 4].map((i) => (
@@ -110,6 +111,10 @@ export default function Home() {
               topic={data.topic}
               total={data.total}
               aiSummary={data.ai_summary}
+            />
+            <Keywords
+              keywords={data.keywords}
+              onKeywordClick={(k) => analyze(k)}
             />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <SentimentChart summary={data.summary} />
