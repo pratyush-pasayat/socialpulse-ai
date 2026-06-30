@@ -7,7 +7,7 @@ export default function SearchHistory({ onSelect, isDark }: { onSelect: (topic: 
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    axios.get("http://localhost:8000/history?limit=10").then((res) => {
+    axios.get("https://socialpulse-ai-backend-7lzo.onrender.com/history?limit=10").then((res) => {
       setHistory(res.data);
     });
   }, []);
