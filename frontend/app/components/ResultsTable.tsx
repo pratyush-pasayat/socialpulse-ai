@@ -1,80 +1,154 @@
-export default function ResultsTable({ items }: any) {
-  const sentimentColor = (s: string) => {
-    if (s === "positive") return "text-green-400 bg-green-400/10 border-green-400/20";
-    if (s === "negative") return "text-red-400 bg-red-400/10 border-red-400/20";
-    return "text-gray-400 bg-gray-400/10 border-gray-400/20";
+export default function ResultsTable({ items, isDark }: any) {
+  const sentimentStyle = (s: string) => {
+    if (s === "positive") return {
+      color: isDark ? "#4ade80" : "#15803d",
+      background: isDark ? "rgba(74,222,128,0.08)" : "rgba(187,247,208,0.7)",
+      border: `1px solid ${isDark ? "rgba(74,222,128,0.15)" : "rgba(74,222,128,0.3)"}`,
+    };
+    if (s === "negative") return {
+      color: isDark ? "#f87171" : "#dc2626",
+      background: isDark ? "rgba(248,113,113,0.08)" : "rgba(254,202,202,0.7)",
+      border: `1px solid ${isDark ? "rgba(248,113,113,0.15)" : "rgba(248,113,113,0.3)"}`,
+    };
+    return {
+      color: isDark ? "#94a3b8" : "#475569",
+      background: isDark ? "rgba(148,163,184,0.08)" : "rgba(226,232,240,0.7)",
+      border: `1px solid ${isDark ? "rgba(148,163,184,0.15)" : "rgba(148,163,184,0.3)"}`,
+    };
   };
 
   const emotionEmoji = (e: string) => {
     const map: any = {
       hopeful: "🌟", angry: "😠", fearful: "😨", sad: "😢",
       excited: "🎉", neutral: "😐", frustrated: "😤",
-      skeptical: "🤨", embarrassed: "😳",
+      skeptical: "🤨", embarrassed: "😳", informative: "📊",
     };
     return map[e] || "😐";
   };
 
-  const sourceColor = (s: string) => {
-    if (s === "news") return "bg-blue-500/20 text-blue-400 border border-blue-400/20";
-    return "bg-orange-500/20 text-orange-400 border border-orange-400/20";
+  const sourceStyle = (s: string) => {
+    if (s === "news") return {
+      color: isDark ? "#93c5fd" : "#1d4ed8",
+      background: isDark ? "rgba(30,58,138,0.3)" : "rgba(219,234,254,0.8)",
+      border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "rgba(59,130,246,0.2)"}`,
+    };
+    if (s === "gnews") return {
+      color: isDark ? "#a78bfa" : "#7c3aed",
+      background: isDark ? "rgba(91,33,182,0.25)" : "rgba(237,233,254,0.8)",
+      border: `1px solid ${isDark ? "rgba(139,92,246,0.2)" : "rgba(139,92,246,0.2)"}`,
+    };
+    if (s === "youtube") return {
+      color: isDark ? "#f87171" : "#dc2626",
+      background: isDark ? "rgba(127,29,29,0.25)" : "rgba(254,226,226,0.8)",
+      border: `1px solid ${isDark ? "rgba(239,68,68,0.2)" : "rgba(239,68,68,0.2)"}`,
+    };
+    return {
+      color: isDark ? "#fb923c" : "#c2410c",
+      background: isDark ? "rgba(124,45,18,0.3)" : "rgba(254,237,213,0.8)",
+      border: `1px solid ${isDark ? "rgba(249,115,22,0.2)" : "rgba(249,115,22,0.2)"}`,
+    };
+  };
+
+  const sourceLabel = (s: string) => {
+    if (s === "news") return "News";
+    if (s === "gnews") return "GNews";
+    if (s === "youtube") return "YouTube";
+    return "HackerNews";
   };
 
   const scoreColor = (score: number) => {
-    if (score >= 0.8) return "text-green-400";
-    if (score >= 0.6) return "text-yellow-400";
-    return "text-gray-400";
+    if (score >= 0.8) return isDark ? "#4ade80" : "#15803d";
+    if (score >= 0.6) return isDark ? "#facc15" : "#a16207";
+    return isDark ? "#94a3b8" : "#475569";
   };
 
   return (
-    <div className="bg-gray-800 rounded-xl p-6">
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-xl font-semibold text-gray-300">Analyzed Items</h2>
-        <span className="text-sm text-gray-500">{items.length} results</span>
+    <div style={{
+      background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.7)",
+      border: `1px solid ${isDark ? "rgba(59,130,246,0.15)" : "rgba(147,197,253,0.4)"}`,
+      borderRadius: "18px",
+      padding: "24px",
+      backdropFilter: "blur(20px)",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
+        <p style={{
+          fontSize: "11px", textTransform: "uppercase" as const,
+          letterSpacing: "0.06em", fontWeight: 600,
+          color: isDark ? "#334155" : "#94a3b8", margin: 0,
+        }}>
+          Analyzed Items
+        </p>
+        <span style={{
+          background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.7)",
+          border: `1px solid ${isDark ? "rgba(59,130,246,0.15)" : "rgba(147,197,253,0.4)"}`,
+          borderRadius: "999px", padding: "4px 12px",
+          fontSize: "12px", color: isDark ? "#475569" : "#94a3b8",
+        }}>
+          {items.length} results
+        </span>
       </div>
 
-      <div className="space-y-3">
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         {items.map((item: any, index: number) => (
           <div
             key={index}
-            className="bg-gray-900 rounded-xl p-4 border border-gray-700 hover:border-gray-500 transition-all"
+            style={{
+              borderRadius: "14px",
+              padding: "16px 18px",
+              cursor: "pointer",
+              transition: "background 0.2s ease",
+              background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.6)",
+              border: `1px solid ${isDark ? "rgba(59,130,246,0.08)" : "rgba(147,197,253,0.3)"}`,
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.85)")}
+            onMouseLeave={e => (e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.6)")}
+            onClick={() => item.url && window.open(item.url, "_blank")}
           >
-            <div className="flex items-start gap-4">
-              {/* Index */}
-              <div className="text-gray-600 text-sm font-mono mt-1 w-5 shrink-0">
-                {index + 1}
-              </div>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
 
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                {/* Badges */}
-                <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <span className={`text-xs px-2 py-0.5 rounded-full border ${sourceColor(item.source)}`}>
-                    {item.source === "news" ? "📰 News" : "🔶 HackerNews"}
+              <span style={{
+                fontSize: "12px", fontFamily: "monospace",
+                marginTop: "2px", width: "16px", flexShrink: 0,
+                color: isDark ? "#1e3a5f" : "#bfdbfe",
+              }}>
+                {index + 1}
+              </span>
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+
+                <div style={{ display: "flex", flexWrap: "wrap" as const, alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                  <span style={{ fontSize: "11px", padding: "2px 10px", borderRadius: "999px", ...sourceStyle(item.source) }}>
+                    {sourceLabel(item.source)}
                   </span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full border font-semibold capitalize ${sentimentColor(item.sentiment)}`}>
+                  <span className="capitalize" style={{ fontSize: "11px", padding: "2px 10px", borderRadius: "999px", fontWeight: 500, ...sentimentStyle(item.sentiment) }}>
                     {item.sentiment}
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span style={{ fontSize: "11px", color: isDark ? "#334155" : "#94a3b8" }}>
                     {emotionEmoji(item.emotion)} {item.emotion}
                   </span>
                 </div>
 
-                {/* Title */}
-                <p
-                  onClick={() => item.url && window.open(item.url, "_blank")}
-                  className={`text-white font-medium text-sm mb-2 line-clamp-2 ${item.url ? "cursor-pointer hover:text-purple-400 transition-colors" : ""}`}
-                >
-                  {item.title} {item.url && "↗"}
+                <p style={{
+                  fontSize: "14px", fontWeight: 500,
+                  lineHeight: 1.5, marginBottom: "6px",
+                  color: isDark ? "#cbd5e1" : "#1e293b",
+                }}>
+                  {item.title}{" "}
+                  {item.url && <span style={{ color: isDark ? "#1e3a5f" : "#bfdbfe" }}>↗</span>}
                 </p>
 
-                {/* AI Summary */}
                 {item.summary && (
-                  <p className="text-gray-400 text-xs leading-relaxed">{item.summary}</p>
+                  <p style={{
+                    fontSize: "12px", lineHeight: 1.6,
+                    color: isDark ? "#64748b" : "#94a3b8",
+                    marginBottom: "8px",
+                  }}>
+                    {item.summary}
+                  </p>
                 )}
 
-                {/* Meta */}
                 {item.published_at && (
-                  <p className="text-gray-600 text-xs mt-2">
+                  <p style={{ fontSize: "11px", color: isDark ? "#475569" : "#bfdbfe", margin: 0 }}>
                     {new Date(item.published_at).toLocaleDateString("en-IN", {
                       year: "numeric", month: "short", day: "numeric",
                     })}
@@ -83,12 +157,11 @@ export default function ResultsTable({ items }: any) {
                 )}
               </div>
 
-              {/* Confidence Score */}
-              <div className="text-right shrink-0">
-                <div className={`text-xl font-bold ${scoreColor(item.score)}`}>
+              <div style={{ textAlign: "right", flexShrink: 0 }}>
+                <div style={{ fontSize: "17px", fontWeight: 700, color: scoreColor(item.score), lineHeight: 1.2 }}>
                   {(item.score * 100).toFixed(0)}%
                 </div>
-                <div className="text-xs text-gray-500">confidence</div>
+                <div style={{ fontSize: "10px", color: isDark ? "#1e3a5f" : "#bfdbfe" }}>confidence</div>
               </div>
             </div>
           </div>

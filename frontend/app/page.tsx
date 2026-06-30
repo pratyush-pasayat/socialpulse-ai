@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import SentimentChart from "./components/SentimentChart";
 import ResultsTable from "./components/ResultsTable";
@@ -13,6 +13,24 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState("");
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    document.body.className = theme;
+    document.documentElement.style.background = theme === "light"
+      ? "linear-gradient(135deg, #e8f4fd 0%, #f0f8ff 60%, #e6f3fb 100%)"
+      : "linear-gradient(135deg, #020b18 0%, #040f1f 60%, #020d1c 100%)";
+    document.documentElement.style.minHeight = "100vh";
+  }, [theme]);
+
+  useEffect(() => {
+    document.body.className = "light";
+    document.documentElement.style.background = "linear-gradient(135deg, #e8f4fd 0%, #f0f8ff 60%, #e6f3fb 100%)";
+    document.documentElement.style.minHeight = "100vh";
+  }, []);
+
+  const toggleTheme = () => setTheme(t => t === "light" ? "dark" : "light");
+  const isDark = theme === "dark";
 
   const analyze = async (searchTopic?: string) => {
     const t = searchTopic || topic;
@@ -34,95 +52,248 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white p-8">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <h1 className="text-5xl font-bold mb-3 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-            SocialPulse AI
-          </h1>
-          <p className="text-gray-400 text-lg">
-            Real-time social listening & sentiment analytics powered by AI agents
-          </p>
-        </div>
+    <main style={{
+      minHeight: "100vh",
+      width: "100%",
+      background: isDark
+        ? "linear-gradient(135deg, #020b18 0%, #040f1f 60%, #020d1c 100%)"
+        : "linear-gradient(135deg, #e8f4fd 0%, #f0f8ff 60%, #e6f3fb 100%)",
+      transition: "background 0.4s ease",
+    }}>
 
-        {/* Search Bar */}
-        <div className="flex gap-3 mb-4">
-          <input
-            type="text"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && analyze()}
-            placeholder="Enter a topic (e.g. OpenAI, Bitcoin, Climate...)"
-            className="flex-1 px-5 py-4 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 text-lg"
-          />
+      <div style={{
+        position: "fixed", top: 0, left: "25%",
+        width: "500px", height: "500px", borderRadius: "50%",
+        pointerEvents: "none", zIndex: 0,
+        background: isDark
+          ? "radial-gradient(circle, rgba(30,64,175,0.1) 0%, transparent 70%)"
+          : "radial-gradient(circle, rgba(59,130,246,0.07) 0%, transparent 70%)",
+      }} />
+      <div style={{
+        position: "fixed", bottom: "10%", right: "10%",
+        width: "400px", height: "400px", borderRadius: "50%",
+        pointerEvents: "none", zIndex: 0,
+        background: isDark
+          ? "radial-gradient(circle, rgba(2,132,199,0.07) 0%, transparent 70%)"
+          : "radial-gradient(circle, rgba(14,165,233,0.05) 0%, transparent 70%)",
+      }} />
+
+      <div style={{
+        maxWidth: "900px",
+        margin: "0 auto",
+        padding: "40px 24px 80px",
+        position: "relative",
+        zIndex: 1,
+      }}>
+
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "64px",
+        }}>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: "8px",
+            background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.7)",
+            border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "rgba(147,197,253,0.5)"}`,
+            borderRadius: "999px", padding: "6px 16px",
+            fontSize: "11px", fontWeight: 500, letterSpacing: "0.08em",
+            textTransform: "uppercase" as const,
+            color: isDark ? "#93c5fd" : "#1d4ed8",
+            backdropFilter: "blur(20px)",
+          }}>
+            <span style={{
+              width: "6px", height: "6px", borderRadius: "50%",
+              background: isDark ? "#60a5fa" : "#3b82f6",
+              display: "inline-block",
+            }} />
+            AI-Powered Social Intelligence
+          </div>
+
           <button
-            onClick={() => analyze()}
-            disabled={loading}
-            className="px-8 py-4 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:opacity-50 font-semibold text-lg transition-all"
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            style={{
+              width: "42px", height: "42px", borderRadius: "50%",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", transition: "all 0.3s ease",
+              background: isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.8)",
+              border: `1px solid ${isDark ? "rgba(59,130,246,0.25)" : "rgba(147,197,253,0.6)"}`,
+              fontSize: "18px", position: "relative", overflow: "hidden",
+              flexShrink: 0, backdropFilter: "blur(20px)",
+            }}
+            onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.1) rotate(15deg)")}
+            onMouseLeave={e => (e.currentTarget.style.transform = "scale(1) rotate(0deg)")}
           >
-            {loading ? "Analyzing..." : "Analyze"}
+            <span style={{
+              position: "absolute",
+              transition: "transform 0.5s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease",
+              transform: isDark ? "rotate(-90deg) scale(0)" : "rotate(0deg) scale(1)",
+              opacity: isDark ? 0 : 1,
+            }}>☀️</span>
+            <span style={{
+              position: "absolute",
+              transition: "transform 0.5s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease",
+              transform: isDark ? "rotate(0deg) scale(1)" : "rotate(90deg) scale(0)",
+              opacity: isDark ? 1 : 0,
+            }}>🌙</span>
           </button>
         </div>
 
-        {/* Search History */}
-        <SearchHistory onSelect={(t) => analyze(t)} />
+        <div style={{ textAlign: "center", marginBottom: "52px" }}>
+          <h1
+            className="glow-text"
+            style={{
+              fontSize: "clamp(52px, 8vw, 76px)",
+              fontWeight: 700,
+              letterSpacing: "-0.03em",
+              marginBottom: "20px",
+              display: "block",
+              lineHeight: 1.05,
+            }}
+          >
+            SocialPulse
+          </h1>
+          <p style={{
+            fontSize: "18px",
+            fontWeight: 300,
+            color: isDark ? "#475569" : "#64748b",
+            lineHeight: 1.7,
+            margin: 0,
+          }}>
+            Understand what the world thinks — in real time.
+          </p>
+        </div>
 
-        {/* Error */}
+        <div style={{
+          background: isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.85)",
+          border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "rgba(147,197,253,0.6)"}`,
+          borderRadius: "18px",
+          padding: "6px",
+          marginBottom: "16px",
+          boxShadow: isDark
+            ? "0 0 40px rgba(59,130,246,0.07), 0 4px 24px rgba(0,0,0,0.3)"
+            : "0 0 40px rgba(59,130,246,0.1), 0 4px 24px rgba(59,130,246,0.06)",
+          backdropFilter: "blur(40px)",
+        }}>
+          <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+            <input
+              type="text"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && analyze()}
+              placeholder="Search any topic, brand, or trend..."
+              style={{
+                flex: 1, padding: "14px 20px",
+                background: "transparent", border: "none", outline: "none",
+                fontSize: "16px",
+                color: isDark ? "#e2e8f0" : "#1e293b",
+              }}
+            />
+            <button
+              onClick={() => analyze()}
+              disabled={loading}
+              style={{
+                padding: "12px 28px", borderRadius: "13px",
+                background: "linear-gradient(135deg, #1d4ed8, #0284c7)",
+                color: "#fff", fontWeight: 600, fontSize: "14px",
+                border: "none", cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading ? 0.5 : 1,
+                transition: "all 0.3s ease",
+                whiteSpace: "nowrap" as const,
+              }}
+            >
+              {loading ? "Analyzing..." : "Analyze →"}
+            </button>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: "48px" }}>
+          <SearchHistory onSelect={(t) => analyze(t)} isDark={isDark} />
+        </div>
+
         {error && (
-          <div className="text-red-400 text-center mb-4 bg-red-400/10 rounded-xl p-4">{error}</div>
+          <div style={{
+            background: "rgba(239,68,68,0.08)",
+            border: "1px solid rgba(239,68,68,0.2)",
+            borderRadius: "14px", padding: "14px 20px",
+            color: "#ef4444", fontSize: "14px",
+            textAlign: "center", marginBottom: "32px",
+          }}>
+            {error}
+          </div>
         )}
 
-        {/* Loading Animation */}
         {loading && (
-          <div className="flex flex-col items-center justify-center py-20 space-y-6">
-            <div className="flex gap-3">
-              {["📡", "🧠", "✍️", "🔑", "💾"].map((emoji, i) => (
-                <div
-                  key={i}
-                  className="text-3xl animate-bounce"
-                  style={{ animationDelay: `${i * 0.2}s` }}
-                >
-                  {emoji}
-                </div>
-              ))}
+          <div style={{
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            padding: "100px 0", gap: "28px",
+          }}>
+            <div style={{ position: "relative", width: "64px", height: "64px" }}>
+              <div style={{
+                position: "absolute", inset: 0, borderRadius: "50%",
+                border: `1px solid ${isDark ? "rgba(96,165,250,0.3)" : "rgba(59,130,246,0.3)"}`,
+                animation: "ping 1s cubic-bezier(0,0,0.2,1) infinite",
+              }} />
+              <div style={{
+                width: "64px", height: "64px", borderRadius: "50%",
+                background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.8)",
+                border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "rgba(147,197,253,0.5)"}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "26px",
+              }}>🧠</div>
             </div>
-            <div className="space-y-2 text-center">
-              <p className="text-purple-400 font-semibold text-lg">AI Agents Working...</p>
-              <p className="text-gray-500 text-sm">Fetching → Analyzing → Summarizing → Extracting → Saving</p>
+            <div style={{ textAlign: "center" }}>
+              <p style={{
+                fontWeight: 500, marginBottom: "8px",
+                color: isDark ? "#60a5fa" : "#1d4ed8",
+                fontSize: "16px",
+              }}>
+                Agents are working
+              </p>
+              <p style={{ fontSize: "13px", color: isDark ? "#334155" : "#94a3b8" }}>
+                Fetch · Analyze · Summarize · Extract · Save
+              </p>
             </div>
-            <div className="flex gap-2">
-              {[0, 1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"
-                  style={{ animationDelay: `${i * 0.15}s` }}
-                />
+            <div style={{ display: "flex", gap: "6px" }}>
+              {[0,1,2,3,4].map(i => (
+                <div key={i} style={{
+                  width: "5px", height: "5px", borderRadius: "50%",
+                  background: isDark ? "#60a5fa" : "#3b82f6",
+                  animation: `pulse 1s ease-in-out ${i*0.15}s infinite`,
+                }} />
               ))}
             </div>
           </div>
         )}
 
-        {/* Results */}
         {data && (
-          <div className="space-y-6">
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
             <SummaryCards
               summary={data.summary}
               topic={data.topic}
               total={data.total}
               aiSummary={data.ai_summary}
+              isDark={isDark}
             />
             <Keywords
               keywords={data.keywords}
               onKeywordClick={(k) => analyze(k)}
+              isDark={isDark}
             />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <SentimentChart summary={data.summary} />
-              <SentimentBarChart items={data.items} />
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: "20px",
+            }}>
+              <SentimentChart summary={data.summary} isDark={isDark} />
+              <SentimentBarChart items={data.items} isDark={isDark} />
             </div>
-            <ResultsTable items={data.items} />
+            <ResultsTable items={data.items} isDark={isDark} />
           </div>
         )}
+
       </div>
     </main>
   );

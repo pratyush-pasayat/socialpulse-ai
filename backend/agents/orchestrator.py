@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 from groq import Groq
 from tools.news_tool import fetch_news
 from tools.hackernews_tool import fetch_hackernews
+from tools.gnews_tool import fetch_gnews
+from tools.youtube_tool import fetch_youtube
 from agents.sentiment_agent import analyze_sentiment
 from tools.supabase_tool import save_search
 
@@ -81,7 +83,7 @@ Keywords:"""
 def run_pipeline(topic: str, max_results: int = 10) -> dict:
     """
     Main orchestrator — coordinates all agents:
-    1. Fetcher Agent: pulls data from NewsAPI + HackerNews
+    1. Fetcher Agent: pulls data from NewsAPI + HackerNews + GNews + YouTube
     2. Sentiment Agent: analyzes each item with Groq
     3. Summary Agent: generates AI narrative
     3b. Keyword Agent: extracts top themes
@@ -94,9 +96,11 @@ def run_pipeline(topic: str, max_results: int = 10) -> dict:
     print("📡 Fetcher Agent: collecting data...")
     news_items = fetch_news(topic, max_results=max_results)
     hn_items = fetch_hackernews(topic, max_results=max_results)
+    gnews_items = fetch_gnews(topic, max_results=max_results)
+    youtube_items = fetch_youtube(topic, max_results=max_results)
 
-    all_items = news_items + hn_items
-    print(f"   ✅ Fetched {len(news_items)} news + {len(hn_items)} HN items")
+    all_items = news_items + hn_items + gnews_items + youtube_items
+    print(f"   ✅ Fetched {len(news_items)} news + {len(hn_items)} HN + {len(gnews_items)} GNews + {len(youtube_items)} YouTube items")
 
     if not all_items:
         return {

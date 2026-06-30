@@ -1,35 +1,57 @@
-export default function Keywords({ keywords, onKeywordClick }: { keywords: string[], onKeywordClick: (k: string) => void }) {
+export default function Keywords({ keywords, onKeywordClick, isDark }: { keywords: string[], onKeywordClick: (k: string) => void, isDark: boolean }) {
   if (!keywords || keywords.length === 0) return null;
 
-  const colors = [
-    "bg-purple-500/20 text-purple-400 border-purple-400/30 hover:bg-purple-500/40",
-    "bg-cyan-500/20 text-cyan-400 border-cyan-400/30 hover:bg-cyan-500/40",
-    "bg-pink-500/20 text-pink-400 border-pink-400/30 hover:bg-pink-500/40",
-    "bg-yellow-500/20 text-yellow-400 border-yellow-400/30 hover:bg-yellow-500/40",
-    "bg-green-500/20 text-green-400 border-green-400/30 hover:bg-green-500/40",
-    "bg-orange-500/20 text-orange-400 border-orange-400/30 hover:bg-orange-500/40",
-    "bg-blue-500/20 text-blue-400 border-blue-400/30 hover:bg-blue-500/40",
-    "bg-red-500/20 text-red-400 border-red-400/30 hover:bg-red-500/40",
-  ];
-
   return (
-    <div className="bg-gray-800 rounded-xl p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <span className="text-lg">🔑</span>
-        <h3 className="text-gray-300 font-semibold">Trending Themes</h3>
-      </div>
-      <div className="flex flex-wrap gap-2">
+    <div style={{
+      background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.7)",
+      border: `1px solid ${isDark ? "rgba(59,130,246,0.15)" : "rgba(147,197,253,0.4)"}`,
+      borderRadius: "18px",
+      padding: "24px",
+      backdropFilter: "blur(20px)",
+    }}>
+      <p style={{
+        fontSize: "11px", textTransform: "uppercase" as const,
+        letterSpacing: "0.06em", fontWeight: 600,
+        color: isDark ? "#334155" : "#94a3b8",
+        marginBottom: "16px",
+      }}>
+        Trending Themes
+      </p>
+      <div style={{ display: "flex", flexWrap: "wrap" as const, gap: "10px" }}>
         {keywords.map((keyword, index) => (
           <button
             key={index}
             onClick={() => onKeywordClick(keyword)}
-            className={`px-3 py-1.5 rounded-full border text-sm font-medium transition-all cursor-pointer ${colors[index % colors.length]}`}
+            style={{
+              padding: "8px 18px",
+              borderRadius: "999px",
+              fontSize: "13px",
+              fontWeight: 500,
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              background: isDark ? "rgba(30,58,138,0.2)" : "rgba(219,234,254,0.7)",
+              border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "rgba(59,130,246,0.2)"}`,
+              color: isDark ? "#93c5fd" : "#1d4ed8",
+            }}
+            onMouseEnter={e => {
+              (e.target as HTMLElement).style.background = isDark ? "rgba(30,58,138,0.4)" : "rgba(191,219,254,0.9)";
+              (e.target as HTMLElement).style.transform = "scale(1.05)";
+            }}
+            onMouseLeave={e => {
+              (e.target as HTMLElement).style.background = isDark ? "rgba(30,58,138,0.2)" : "rgba(219,234,254,0.7)";
+              (e.target as HTMLElement).style.transform = "scale(1)";
+            }}
           >
             {keyword}
           </button>
         ))}
       </div>
-      <p className="text-gray-600 text-xs mt-3">Click a keyword to analyze it</p>
+      <p style={{
+        fontSize: "12px", marginTop: "16px", marginBottom: 0,
+        color: isDark ? "#1e3a5f" : "#bfdbfe",
+      }}>
+        Click any theme to analyze it
+      </p>
     </div>
   );
 }
