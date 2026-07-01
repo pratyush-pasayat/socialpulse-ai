@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import axios from "axios";
 import SentimentChart from "./components/SentimentChart";
 import ResultsTable from "./components/ResultsTable";
 import SummaryCards from "./components/SummaryCards";
@@ -13,7 +12,12 @@ const API = "https://socialpulse-ai-backend-7lzo.onrender.com";
 export default function Home() {
   const [topic, setTopic] = useState("");
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<any>(null);
+  const [stage, setStage] = useState<"idle" | "fetching" | "analyzing" | "summarizing" | "done">("idle");
+  const [items, setItems] = useState<any[]>([]);
+  const [summary, setSummary] = useState<any>(null);
+  const [aiSummary, setAiSummary] = useState<string>("");
+  const [keywords, setKeywords] = useState<string[]>([]);
+  const [total, setTotal] = useState(0);
   const [error, setError] = useState("");
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
@@ -39,19 +43,63 @@ export default function Home() {
     if (!t.trim()) return;
     setTopic(t);
     setLoading(true);
+    setStage("fetching");
     setError("");
-    setData(null);
+    setItems([]);
+    setSummary(null);
+    setAiSummary("");
+    setKeywords([]);
+    setTotal(0);
+
     try {
-      const res = await axios.get(`${API}/analyze`, {
-        params: { topic: t, max_results: 10 },
-      });
-      setData(res.data);
+      const response = await fetch(`${API}/analyze-stream?topic=${encodeURIComponent(t)}&max_results=10`);
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n").filter(l => l.startsWith("data: "));
+
+        for (const line of lines) {
+          try {
+            const data = JSON.parse(line.replace("data: ", ""));
+
+            if (data.stage === "items") {
+              setItems(data.items);
+              setStage("analyzing");
+            } else if (data.stage === "sentiment") {
+              setItems(data.items);
+              setStage("summarizing");
+            } else if (data.stage === "summary") {
+              setSummary(data.summary);
+              setAiSummary(data.ai_summary);
+              setKeywords(data.keywords);
+              setTotal(data.total);
+              setStage("done");
+            }
+          } catch (e) {
+            // skip malformed chunks
+          }
+        }
+      }
     } catch (err) {
       setError("Failed to fetch data. Make sure the backend is running.");
     } finally {
       setLoading(false);
     }
   };
+
+  const stageLabel = () => {
+    if (stage === "fetching") return { emoji: "📡", text: "Fetching from 4 sources..." };
+    if (stage === "analyzing") return { emoji: "🧠", text: "Analyzing sentiment..." };
+    if (stage === "summarizing") return { emoji: "✍️", text: "Generating AI summary..." };
+    return { emoji: "✅", text: "Done!" };
+  };
+
+  const showResults = items.length > 0;
 
   return (
     <main style={{
@@ -64,7 +112,6 @@ export default function Home() {
       transition: "background 0.4s ease",
     }}>
 
-      {/* Ambient orbs - hidden on mobile for performance */}
       <div style={{
         position: "fixed", top: 0, left: "25%",
         width: "500px", height: "500px", borderRadius: "50%",
@@ -86,8 +133,7 @@ export default function Home() {
 
         {/* ── TOP NAV ── */}
         <div style={{
-          display: "flex",
-          alignItems: "center",
+          display: "flex", alignItems: "center",
           justifyContent: "space-between",
           marginBottom: "clamp(32px, 6vw, 64px)",
         }}>
@@ -141,26 +187,18 @@ export default function Home() {
 
         {/* ── HERO ── */}
         <div style={{ textAlign: "center", marginBottom: "clamp(28px, 5vw, 52px)" }}>
-          <h1
-            className="glow-text"
-            style={{
-              fontSize: "clamp(36px, 10vw, 76px)",
-              fontWeight: 700,
-              letterSpacing: "-0.03em",
-              marginBottom: "clamp(12px, 3vw, 20px)",
-              display: "block",
-              lineHeight: 1.05,
-            }}
-          >
+          <h1 className="glow-text" style={{
+            fontSize: "clamp(36px, 10vw, 76px)",
+            fontWeight: 700, letterSpacing: "-0.03em",
+            marginBottom: "clamp(12px, 3vw, 20px)",
+            display: "block", lineHeight: 1.05,
+          }}>
             SocialPulse
           </h1>
           <p style={{
-            fontSize: "clamp(14px, 3.5vw, 18px)",
-            fontWeight: 300,
+            fontSize: "clamp(14px, 3.5vw, 18px)", fontWeight: 300,
             color: isDark ? "#475569" : "#64748b",
-            lineHeight: 1.7,
-            margin: 0,
-            padding: "0 8px",
+            lineHeight: 1.7, margin: 0, padding: "0 8px",
           }}>
             Understand what the world thinks — in real time.
           </p>
@@ -170,12 +208,8 @@ export default function Home() {
         <div style={{
           background: isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.85)",
           border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "rgba(147,197,253,0.6)"}`,
-          borderRadius: "18px",
-          padding: "6px",
-          marginBottom: "16px",
-          boxShadow: isDark
-            ? "0 0 40px rgba(59,130,246,0.07)"
-            : "0 0 40px rgba(59,130,246,0.1)",
+          borderRadius: "18px", padding: "6px", marginBottom: "16px",
+          boxShadow: isDark ? "0 0 40px rgba(59,130,246,0.07)" : "0 0 40px rgba(59,130,246,0.1)",
           backdropFilter: "blur(40px)",
         }}>
           <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
@@ -189,8 +223,7 @@ export default function Home() {
                 flex: 1, padding: "clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 20px)",
                 background: "transparent", border: "none", outline: "none",
                 fontSize: "clamp(14px, 3.5vw, 16px)",
-                color: isDark ? "#e2e8f0" : "#1e293b",
-                minWidth: 0,
+                color: isDark ? "#e2e8f0" : "#1e293b", minWidth: 0,
               }}
             />
             <button
@@ -205,8 +238,7 @@ export default function Home() {
                 border: "none", cursor: loading ? "not-allowed" : "pointer",
                 opacity: loading ? 0.5 : 1,
                 transition: "all 0.3s ease",
-                whiteSpace: "nowrap" as const,
-                flexShrink: 0,
+                whiteSpace: "nowrap" as const, flexShrink: 0,
               }}
             >
               {loading ? "..." : "Analyze →"}
@@ -232,79 +264,88 @@ export default function Home() {
           </div>
         )}
 
-        {/* ── LOADING ── */}
+        {/* ── PROGRESSIVE STAGE INDICATOR ── */}
         {loading && (
           <div style={{
-            display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center",
-            padding: "clamp(60px, 10vw, 100px) 0", gap: "24px",
+            display: "flex", alignItems: "center", gap: "10px",
+            padding: "12px 18px", marginBottom: "20px",
+            background: isDark ? "rgba(59,130,246,0.08)" : "rgba(219,234,254,0.6)",
+            border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "rgba(59,130,246,0.2)"}`,
+            borderRadius: "12px",
+            animation: "pulse 2s ease-in-out infinite",
           }}>
-            <div style={{ position: "relative", width: "56px", height: "56px" }}>
-              <div style={{
-                position: "absolute", inset: 0, borderRadius: "50%",
-                border: `1px solid ${isDark ? "rgba(96,165,250,0.3)" : "rgba(59,130,246,0.3)"}`,
-                animation: "ping 1s cubic-bezier(0,0,0.2,1) infinite",
-              }} />
-              <div style={{
-                width: "56px", height: "56px", borderRadius: "50%",
-                background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.8)",
-                border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "rgba(147,197,253,0.5)"}`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "22px",
-              }}>🧠</div>
-            </div>
-            <div style={{ textAlign: "center" }}>
-              <p style={{
-                fontWeight: 500, marginBottom: "8px",
-                color: isDark ? "#60a5fa" : "#1d4ed8",
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-              }}>
-                Agents are working
-              </p>
-              <p style={{ fontSize: "clamp(11px, 2.5vw, 13px)", color: isDark ? "#334155" : "#94a3b8" }}>
-                Fetch · Analyze · Summarize · Extract · Save
-              </p>
-            </div>
-            <div style={{ display: "flex", gap: "6px" }}>
-              {[0,1,2,3,4].map(i => (
+            <span style={{ fontSize: "18px" }}>{stageLabel().emoji}</span>
+            <span style={{ fontSize: "13px", fontWeight: 500, color: isDark ? "#60a5fa" : "#1d4ed8" }}>
+              {stageLabel().text}
+            </span>
+            <div style={{ display: "flex", gap: "4px", marginLeft: "auto" }}>
+              {[0,1,2].map(i => (
                 <div key={i} style={{
-                  width: "5px", height: "5px", borderRadius: "50%",
+                  width: "4px", height: "4px", borderRadius: "50%",
                   background: isDark ? "#60a5fa" : "#3b82f6",
-                  animation: `pulse 1s ease-in-out ${i*0.15}s infinite`,
+                  animation: `pulse 0.8s ease-in-out ${i*0.2}s infinite`,
                 }} />
               ))}
             </div>
           </div>
         )}
 
-        {/* ── RESULTS ── */}
-        {data && (
+        {/* ── PROGRESSIVE RESULTS ── */}
+        {showResults && (
           <div style={{ display: "flex", flexDirection: "column", gap: "clamp(12px, 3vw, 20px)" }}>
-            <SummaryCards
-              summary={data.summary}
-              topic={data.topic}
-              total={data.total}
-              aiSummary={data.ai_summary}
-              isDark={isDark}
-            />
-            <Keywords
-              keywords={data.keywords}
-              onKeywordClick={(k) => analyze(k)}
-              isDark={isDark}
-            />
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))",
-              gap: "clamp(12px, 3vw, 20px)",
-            }}>
-              <SentimentChart summary={data.summary} isDark={isDark} />
-              <SentimentBarChart items={data.items} isDark={isDark} />
+
+            {/* Summary cards — show when summary is ready */}
+            {summary && (
+              <div style={{ animation: "fadeIn 0.4s ease-in" }}>
+                <SummaryCards
+                  summary={summary}
+                  topic={topic}
+                  total={total}
+                  aiSummary={aiSummary}
+                  isDark={isDark}
+                />
+              </div>
+            )}
+
+            {/* Keywords — show when ready */}
+            {keywords.length > 0 && (
+              <div style={{ animation: "fadeIn 0.4s ease-in" }}>
+                <Keywords
+                  keywords={keywords}
+                  onKeywordClick={(k) => analyze(k)}
+                  isDark={isDark}
+                />
+              </div>
+            )}
+
+            {/* Charts — show when summary is ready */}
+            {summary && (
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))",
+                gap: "clamp(12px, 3vw, 20px)",
+                animation: "fadeIn 0.4s ease-in",
+              }}>
+                <SentimentChart summary={summary} isDark={isDark} />
+                <SentimentBarChart items={items} isDark={isDark} />
+              </div>
+            )}
+
+            {/* Results table — shows immediately with raw items, updates with sentiment */}
+            <div style={{ animation: "fadeIn 0.3s ease-in" }}>
+              <ResultsTable items={items} isDark={isDark} />
             </div>
-            <ResultsTable items={data.items} isDark={isDark} />
           </div>
         )}
 
       </div>
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </main>
   );
 }
