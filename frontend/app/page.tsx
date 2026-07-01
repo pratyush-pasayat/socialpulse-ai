@@ -35,6 +35,18 @@ export default function Home() {
     document.documentElement.style.minHeight = "100vh";
   }, []);
 
+  // Auto-cycle loading stage labels while waiting
+  useEffect(() => {
+    if (!loading) return;
+    const stages: Array<"fetching" | "analyzing" | "summarizing"> = ["fetching", "analyzing", "summarizing"];
+    let i = 0;
+    const interval = setInterval(() => {
+      i = (i + 1) % stages.length;
+      setStage(stages[i]);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [loading]);
+
   const toggleTheme = () => setTheme(t => t === "light" ? "dark" : "light");
   const isDark = theme === "dark";
 
@@ -52,39 +64,14 @@ export default function Home() {
     setTotal(0);
 
     try {
-      const response = await fetch(`${API}/analyze-stream?topic=${encodeURIComponent(t)}&max_results=10`);
-      const reader = response.body!.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n").filter(l => l.startsWith("data: "));
-
-        for (const line of lines) {
-          try {
-            const data = JSON.parse(line.replace("data: ", ""));
-
-            if (data.stage === "items") {
-              setItems(data.items);
-              setStage("analyzing");
-            } else if (data.stage === "sentiment") {
-              setItems(data.items);
-              setStage("summarizing");
-            } else if (data.stage === "summary") {
-              setSummary(data.summary);
-              setAiSummary(data.ai_summary);
-              setKeywords(data.keywords);
-              setTotal(data.total);
-              setStage("done");
-            }
-          } catch (e) {
-            // skip malformed chunks
-          }
-        }
-      }
+      const res = await fetch(`${API}/analyze?topic=${encodeURIComponent(t)}&max_results=10`);
+      const data = await res.json();
+      setItems(data.items || []);
+      setSummary(data.summary);
+      setAiSummary(data.ai_summary);
+      setKeywords(data.keywords || []);
+      setTotal(data.total);
+      setStage("done");
     } catch (err) {
       setError("Failed to fetch data. Make sure the backend is running.");
     } finally {
@@ -94,12 +81,12 @@ export default function Home() {
 
   const stageLabel = () => {
     if (stage === "fetching") return { emoji: "📡", text: "Fetching from 4 sources..." };
-    if (stage === "analyzing") return { emoji: "🧠", text: "Analyzing sentiment..." };
-    if (stage === "summarizing") return { emoji: "✍️", text: "Generating AI summary..." };
+    if (stage === "analyzing") return { emoji: "🧠", text: "Analyzing sentiment with AI..." };
+    if (stage === "summarizing") return { emoji: "✍️", text: "Generating insights..." };
     return { emoji: "✅", text: "Done!" };
   };
 
-  const showResults = items.length > 0;
+  const showResults = items.length > 0 && stage === "done";
 
   return (
     <main style={{
@@ -112,6 +99,7 @@ export default function Home() {
       transition: "background 0.4s ease",
     }}>
 
+      {/* Ambient orb */}
       <div style={{
         position: "fixed", top: 0, left: "25%",
         width: "500px", height: "500px", borderRadius: "50%",
@@ -142,8 +130,8 @@ export default function Home() {
             background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.7)",
             border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "rgba(147,197,253,0.5)"}`,
             borderRadius: "999px", padding: "6px 12px",
-            fontSize: "clamp(9px, 2vw, 11px)", fontWeight: 500, letterSpacing: "0.06em",
-            textTransform: "uppercase" as const,
+            fontSize: "clamp(9px, 2vw, 11px)", fontWeight: 500,
+            letterSpacing: "0.06em", textTransform: "uppercase" as const,
             color: isDark ? "#93c5fd" : "#1d4ed8",
             backdropFilter: "blur(20px)",
           }}>
@@ -209,7 +197,9 @@ export default function Home() {
           background: isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.85)",
           border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "rgba(147,197,253,0.6)"}`,
           borderRadius: "18px", padding: "6px", marginBottom: "16px",
-          boxShadow: isDark ? "0 0 40px rgba(59,130,246,0.07)" : "0 0 40px rgba(59,130,246,0.1)",
+          boxShadow: isDark
+            ? "0 0 40px rgba(59,130,246,0.07)"
+            : "0 0 40px rgba(59,130,246,0.1)",
           backdropFilter: "blur(40px)",
         }}>
           <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
@@ -220,10 +210,12 @@ export default function Home() {
               onKeyDown={(e) => e.key === "Enter" && analyze()}
               placeholder="Search any topic, brand, or trend..."
               style={{
-                flex: 1, padding: "clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 20px)",
+                flex: 1,
+                padding: "clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 20px)",
                 background: "transparent", border: "none", outline: "none",
                 fontSize: "clamp(14px, 3.5vw, 16px)",
-                color: isDark ? "#e2e8f0" : "#1e293b", minWidth: 0,
+                color: isDark ? "#e2e8f0" : "#1e293b",
+                minWidth: 0,
               }}
             />
             <button
@@ -264,75 +256,91 @@ export default function Home() {
           </div>
         )}
 
-        {/* ── PROGRESSIVE STAGE INDICATOR ── */}
+        {/* ── LOADING STAGE INDICATOR ── */}
         {loading && (
           <div style={{
-            display: "flex", alignItems: "center", gap: "10px",
-            padding: "12px 18px", marginBottom: "20px",
-            background: isDark ? "rgba(59,130,246,0.08)" : "rgba(219,234,254,0.6)",
-            border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "rgba(59,130,246,0.2)"}`,
-            borderRadius: "12px",
-            animation: "pulse 2s ease-in-out infinite",
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            padding: "clamp(60px, 10vw, 100px) 0", gap: "24px",
           }}>
-            <span style={{ fontSize: "18px" }}>{stageLabel().emoji}</span>
-            <span style={{ fontSize: "13px", fontWeight: 500, color: isDark ? "#60a5fa" : "#1d4ed8" }}>
-              {stageLabel().text}
-            </span>
-            <div style={{ display: "flex", gap: "4px", marginLeft: "auto" }}>
-              {[0,1,2].map(i => (
+            {/* Pulsing brain */}
+            <div style={{ position: "relative", width: "56px", height: "56px" }}>
+              <div style={{
+                position: "absolute", inset: 0, borderRadius: "50%",
+                border: `1px solid ${isDark ? "rgba(96,165,250,0.3)" : "rgba(59,130,246,0.3)"}`,
+                animation: "ping 1s cubic-bezier(0,0,0.2,1) infinite",
+              }} />
+              <div style={{
+                width: "56px", height: "56px", borderRadius: "50%",
+                background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.8)",
+                border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "rgba(147,197,253,0.5)"}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "22px",
+              }}>
+                {stageLabel().emoji}
+              </div>
+            </div>
+
+            {/* Stage label */}
+            <div style={{ textAlign: "center" }}>
+              <p style={{
+                fontWeight: 500, marginBottom: "8px",
+                color: isDark ? "#60a5fa" : "#1d4ed8",
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                transition: "all 0.4s ease",
+              }}>
+                {stageLabel().text}
+              </p>
+              <p style={{
+                fontSize: "clamp(11px, 2.5vw, 13px)",
+                color: isDark ? "#334155" : "#94a3b8",
+              }}>
+                Fetch · Analyze · Summarize · Extract · Save
+              </p>
+            </div>
+
+            {/* Dots */}
+            <div style={{ display: "flex", gap: "6px" }}>
+              {[0,1,2,3,4].map(i => (
                 <div key={i} style={{
-                  width: "4px", height: "4px", borderRadius: "50%",
+                  width: "5px", height: "5px", borderRadius: "50%",
                   background: isDark ? "#60a5fa" : "#3b82f6",
-                  animation: `pulse 0.8s ease-in-out ${i*0.2}s infinite`,
+                  animation: `pulse 1s ease-in-out ${i*0.15}s infinite`,
                 }} />
               ))}
             </div>
           </div>
         )}
 
-        {/* ── PROGRESSIVE RESULTS ── */}
+        {/* ── RESULTS ── */}
         {showResults && (
           <div style={{ display: "flex", flexDirection: "column", gap: "clamp(12px, 3vw, 20px)" }}>
-
-            {/* Summary cards — show when summary is ready */}
-            {summary && (
-              <div style={{ animation: "fadeIn 0.4s ease-in" }}>
-                <SummaryCards
-                  summary={summary}
-                  topic={topic}
-                  total={total}
-                  aiSummary={aiSummary}
-                  isDark={isDark}
-                />
-              </div>
-            )}
-
-            {/* Keywords — show when ready */}
-            {keywords.length > 0 && (
-              <div style={{ animation: "fadeIn 0.4s ease-in" }}>
-                <Keywords
-                  keywords={keywords}
-                  onKeywordClick={(k) => analyze(k)}
-                  isDark={isDark}
-                />
-              </div>
-            )}
-
-            {/* Charts — show when summary is ready */}
-            {summary && (
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))",
-                gap: "clamp(12px, 3vw, 20px)",
-                animation: "fadeIn 0.4s ease-in",
-              }}>
-                <SentimentChart summary={summary} isDark={isDark} />
-                <SentimentBarChart items={items} isDark={isDark} />
-              </div>
-            )}
-
-            {/* Results table — shows immediately with raw items, updates with sentiment */}
-            <div style={{ animation: "fadeIn 0.3s ease-in" }}>
+            <div style={{ animation: "fadeIn 0.4s ease-in" }}>
+              <SummaryCards
+                summary={summary}
+                topic={topic}
+                total={total}
+                aiSummary={aiSummary}
+                isDark={isDark}
+              />
+            </div>
+            <div style={{ animation: "fadeIn 0.5s ease-in" }}>
+              <Keywords
+                keywords={keywords}
+                onKeywordClick={(k) => analyze(k)}
+                isDark={isDark}
+              />
+            </div>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))",
+              gap: "clamp(12px, 3vw, 20px)",
+              animation: "fadeIn 0.6s ease-in",
+            }}>
+              <SentimentChart summary={summary} isDark={isDark} />
+              <SentimentBarChart items={items} isDark={isDark} />
+            </div>
+            <div style={{ animation: "fadeIn 0.7s ease-in" }}>
               <ResultsTable items={items} isDark={isDark} />
             </div>
           </div>
@@ -342,8 +350,15 @@ export default function Home() {
 
       <style>{`
         @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(8px); }
+          from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes ping {
+          75%, 100% { transform: scale(2); opacity: 0; }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
         }
       `}</style>
     </main>
