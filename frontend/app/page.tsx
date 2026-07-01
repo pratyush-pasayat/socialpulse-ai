@@ -8,6 +8,8 @@ import SentimentBarChart from "./components/BarChart";
 import SearchHistory from "./components/SearchHistory";
 import Keywords from "./components/Keywords";
 
+const API = "https://socialpulse-ai-backend-7lzo.onrender.com";
+
 export default function Home() {
   const [topic, setTopic] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,7 +42,7 @@ export default function Home() {
     setError("");
     setData(null);
     try {
-      const res = await axios.get(`https://socialpulse-ai-backend-7lzo.onrender.com/analyze`, {
+      const res = await axios.get(`${API}/analyze`, {
         params: { topic: t, max_results: 10 },
       });
       setData(res.data);
@@ -55,12 +57,14 @@ export default function Home() {
     <main style={{
       minHeight: "100vh",
       width: "100%",
+      overflowX: "hidden",
       background: isDark
         ? "linear-gradient(135deg, #020b18 0%, #040f1f 60%, #020d1c 100%)"
         : "linear-gradient(135deg, #e8f4fd 0%, #f0f8ff 60%, #e6f3fb 100%)",
       transition: "background 0.4s ease",
     }}>
 
+      {/* Ambient orbs - hidden on mobile for performance */}
       <div style={{
         position: "fixed", top: 0, left: "25%",
         width: "500px", height: "500px", borderRadius: "50%",
@@ -69,35 +73,30 @@ export default function Home() {
           ? "radial-gradient(circle, rgba(30,64,175,0.1) 0%, transparent 70%)"
           : "radial-gradient(circle, rgba(59,130,246,0.07) 0%, transparent 70%)",
       }} />
-      <div style={{
-        position: "fixed", bottom: "10%", right: "10%",
-        width: "400px", height: "400px", borderRadius: "50%",
-        pointerEvents: "none", zIndex: 0,
-        background: isDark
-          ? "radial-gradient(circle, rgba(2,132,199,0.07) 0%, transparent 70%)"
-          : "radial-gradient(circle, rgba(14,165,233,0.05) 0%, transparent 70%)",
-      }} />
 
       <div style={{
         maxWidth: "900px",
         margin: "0 auto",
-        padding: "40px 24px 80px",
+        padding: "clamp(16px, 4vw, 40px) clamp(16px, 4vw, 24px) 80px",
         position: "relative",
         zIndex: 1,
+        boxSizing: "border-box",
+        width: "100%",
       }}>
 
+        {/* ── TOP NAV ── */}
         <div style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: "64px",
+          marginBottom: "clamp(32px, 6vw, 64px)",
         }}>
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "8px",
             background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.7)",
             border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "rgba(147,197,253,0.5)"}`,
-            borderRadius: "999px", padding: "6px 16px",
-            fontSize: "11px", fontWeight: 500, letterSpacing: "0.08em",
+            borderRadius: "999px", padding: "6px 12px",
+            fontSize: "clamp(9px, 2vw, 11px)", fontWeight: 500, letterSpacing: "0.06em",
             textTransform: "uppercase" as const,
             color: isDark ? "#93c5fd" : "#1d4ed8",
             backdropFilter: "blur(20px)",
@@ -105,7 +104,7 @@ export default function Home() {
             <span style={{
               width: "6px", height: "6px", borderRadius: "50%",
               background: isDark ? "#60a5fa" : "#3b82f6",
-              display: "inline-block",
+              display: "inline-block", flexShrink: 0,
             }} />
             AI-Powered Social Intelligence
           </div>
@@ -114,12 +113,12 @@ export default function Home() {
             onClick={toggleTheme}
             aria-label="Toggle theme"
             style={{
-              width: "42px", height: "42px", borderRadius: "50%",
+              width: "40px", height: "40px", borderRadius: "50%",
               display: "flex", alignItems: "center", justifyContent: "center",
               cursor: "pointer", transition: "all 0.3s ease",
               background: isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.8)",
               border: `1px solid ${isDark ? "rgba(59,130,246,0.25)" : "rgba(147,197,253,0.6)"}`,
-              fontSize: "18px", position: "relative", overflow: "hidden",
+              fontSize: "16px", position: "relative", overflow: "hidden",
               flexShrink: 0, backdropFilter: "blur(20px)",
             }}
             onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.1) rotate(15deg)")}
@@ -140,14 +139,15 @@ export default function Home() {
           </button>
         </div>
 
-        <div style={{ textAlign: "center", marginBottom: "52px" }}>
+        {/* ── HERO ── */}
+        <div style={{ textAlign: "center", marginBottom: "clamp(28px, 5vw, 52px)" }}>
           <h1
             className="glow-text"
             style={{
-              fontSize: "clamp(52px, 8vw, 76px)",
+              fontSize: "clamp(36px, 10vw, 76px)",
               fontWeight: 700,
               letterSpacing: "-0.03em",
-              marginBottom: "20px",
+              marginBottom: "clamp(12px, 3vw, 20px)",
               display: "block",
               lineHeight: 1.05,
             }}
@@ -155,16 +155,18 @@ export default function Home() {
             SocialPulse
           </h1>
           <p style={{
-            fontSize: "18px",
+            fontSize: "clamp(14px, 3.5vw, 18px)",
             fontWeight: 300,
             color: isDark ? "#475569" : "#64748b",
             lineHeight: 1.7,
             margin: 0,
+            padding: "0 8px",
           }}>
             Understand what the world thinks — in real time.
           </p>
         </div>
 
+        {/* ── SEARCH ── */}
         <div style={{
           background: isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.85)",
           border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "rgba(147,197,253,0.6)"}`,
@@ -172,8 +174,8 @@ export default function Home() {
           padding: "6px",
           marginBottom: "16px",
           boxShadow: isDark
-            ? "0 0 40px rgba(59,130,246,0.07), 0 4px 24px rgba(0,0,0,0.3)"
-            : "0 0 40px rgba(59,130,246,0.1), 0 4px 24px rgba(59,130,246,0.06)",
+            ? "0 0 40px rgba(59,130,246,0.07)"
+            : "0 0 40px rgba(59,130,246,0.1)",
           backdropFilter: "blur(40px)",
         }}>
           <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
@@ -184,34 +186,40 @@ export default function Home() {
               onKeyDown={(e) => e.key === "Enter" && analyze()}
               placeholder="Search any topic, brand, or trend..."
               style={{
-                flex: 1, padding: "14px 20px",
+                flex: 1, padding: "clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 20px)",
                 background: "transparent", border: "none", outline: "none",
-                fontSize: "16px",
+                fontSize: "clamp(14px, 3.5vw, 16px)",
                 color: isDark ? "#e2e8f0" : "#1e293b",
+                minWidth: 0,
               }}
             />
             <button
               onClick={() => analyze()}
               disabled={loading}
               style={{
-                padding: "12px 28px", borderRadius: "13px",
+                padding: "clamp(10px, 2.5vw, 12px) clamp(14px, 3vw, 24px)",
+                borderRadius: "13px",
                 background: "linear-gradient(135deg, #1d4ed8, #0284c7)",
-                color: "#fff", fontWeight: 600, fontSize: "14px",
+                color: "#fff", fontWeight: 600,
+                fontSize: "clamp(12px, 3vw, 14px)",
                 border: "none", cursor: loading ? "not-allowed" : "pointer",
                 opacity: loading ? 0.5 : 1,
                 transition: "all 0.3s ease",
                 whiteSpace: "nowrap" as const,
+                flexShrink: 0,
               }}
             >
-              {loading ? "Analyzing..." : "Analyze →"}
+              {loading ? "..." : "Analyze →"}
             </button>
           </div>
         </div>
 
-        <div style={{ marginBottom: "48px" }}>
+        {/* ── SEARCH HISTORY ── */}
+        <div style={{ marginBottom: "clamp(24px, 5vw, 48px)" }}>
           <SearchHistory onSelect={(t) => analyze(t)} isDark={isDark} />
         </div>
 
+        {/* ── ERROR ── */}
         {error && (
           <div style={{
             background: "rgba(239,68,68,0.08)",
@@ -224,35 +232,36 @@ export default function Home() {
           </div>
         )}
 
+        {/* ── LOADING ── */}
         {loading && (
           <div style={{
             display: "flex", flexDirection: "column",
             alignItems: "center", justifyContent: "center",
-            padding: "100px 0", gap: "28px",
+            padding: "clamp(60px, 10vw, 100px) 0", gap: "24px",
           }}>
-            <div style={{ position: "relative", width: "64px", height: "64px" }}>
+            <div style={{ position: "relative", width: "56px", height: "56px" }}>
               <div style={{
                 position: "absolute", inset: 0, borderRadius: "50%",
                 border: `1px solid ${isDark ? "rgba(96,165,250,0.3)" : "rgba(59,130,246,0.3)"}`,
                 animation: "ping 1s cubic-bezier(0,0,0.2,1) infinite",
               }} />
               <div style={{
-                width: "64px", height: "64px", borderRadius: "50%",
+                width: "56px", height: "56px", borderRadius: "50%",
                 background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.8)",
                 border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "rgba(147,197,253,0.5)"}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "26px",
+                fontSize: "22px",
               }}>🧠</div>
             </div>
             <div style={{ textAlign: "center" }}>
               <p style={{
                 fontWeight: 500, marginBottom: "8px",
                 color: isDark ? "#60a5fa" : "#1d4ed8",
-                fontSize: "16px",
+                fontSize: "clamp(14px, 3.5vw, 16px)",
               }}>
                 Agents are working
               </p>
-              <p style={{ fontSize: "13px", color: isDark ? "#334155" : "#94a3b8" }}>
+              <p style={{ fontSize: "clamp(11px, 2.5vw, 13px)", color: isDark ? "#334155" : "#94a3b8" }}>
                 Fetch · Analyze · Summarize · Extract · Save
               </p>
             </div>
@@ -268,8 +277,9 @@ export default function Home() {
           </div>
         )}
 
+        {/* ── RESULTS ── */}
         {data && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "clamp(12px, 3vw, 20px)" }}>
             <SummaryCards
               summary={data.summary}
               topic={data.topic}
@@ -284,8 +294,8 @@ export default function Home() {
             />
             <div style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              gap: "20px",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))",
+              gap: "clamp(12px, 3vw, 20px)",
             }}>
               <SentimentChart summary={data.summary} isDark={isDark} />
               <SentimentBarChart items={data.items} isDark={isDark} />

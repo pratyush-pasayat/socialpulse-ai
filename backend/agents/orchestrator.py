@@ -94,10 +94,10 @@ def run_pipeline(topic: str, max_results: int = 10) -> dict:
 
     # ── Agent 1: Fetch data ──────────────────────────────
     print("📡 Fetcher Agent: collecting data...")
-    news_items = fetch_news(topic, max_results=max_results)
-    hn_items = fetch_hackernews(topic, max_results=max_results)
-    gnews_items = fetch_gnews(topic, max_results=max_results)
-    youtube_items = fetch_youtube(topic, max_results=max_results)
+    news_items = fetch_news(topic, max_results=5)
+    hn_items = fetch_hackernews(topic, max_results=5)
+    gnews_items = fetch_gnews(topic, max_results=5)
+    youtube_items = fetch_youtube(topic, max_results=5)
 
     all_items = news_items + hn_items + gnews_items + youtube_items
     print(f"   ✅ Fetched {len(news_items)} news + {len(hn_items)} HN + {len(gnews_items)} GNews + {len(youtube_items)} YouTube items")
