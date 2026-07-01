@@ -57,6 +57,7 @@ export default function ResultsTable({ items, isDark }: any) {
   };
 
   const scoreColor = (score: number) => {
+    if (!score) return isDark ? "#94a3b8" : "#475569";
     if (score >= 0.8) return isDark ? "#4ade80" : "#15803d";
     if (score >= 0.6) return isDark ? "#facc15" : "#a16207";
     return isDark ? "#94a3b8" : "#475569";
@@ -95,7 +96,7 @@ export default function ResultsTable({ items, isDark }: any) {
             style={{
               borderRadius: "14px",
               padding: "16px 18px",
-              cursor: "pointer",
+              cursor: item.url ? "pointer" : "default",
               transition: "background 0.2s ease",
               background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.6)",
               border: `1px solid ${isDark ? "rgba(59,130,246,0.08)" : "rgba(147,197,253,0.3)"}`,
@@ -116,18 +117,51 @@ export default function ResultsTable({ items, isDark }: any) {
 
               <div style={{ flex: 1, minWidth: 0 }}>
 
-                <div style={{ display: "flex", flexWrap: "wrap" as const, alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                  <span style={{ fontSize: "11px", padding: "2px 10px", borderRadius: "999px", ...sourceStyle(item.source) }}>
+                {/* Badges */}
+                <div style={{ display: "flex", flexWrap: "wrap" as const, alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+                  <span style={{
+                    fontSize: "11px", padding: "2px 10px",
+                    borderRadius: "999px", ...sourceStyle(item.source),
+                  }}>
                     {sourceLabel(item.source)}
                   </span>
-                  <span className="capitalize" style={{ fontSize: "11px", padding: "2px 10px", borderRadius: "999px", fontWeight: 500, ...sentimentStyle(item.sentiment) }}>
-                    {item.sentiment}
-                  </span>
-                  <span style={{ fontSize: "11px", color: isDark ? "#334155" : "#94a3b8" }}>
-                    {emotionEmoji(item.emotion)} {item.emotion}
-                  </span>
+
+                  {item.sentiment && (
+                    <span className="capitalize" style={{
+                      fontSize: "11px", padding: "2px 10px",
+                      borderRadius: "999px", fontWeight: 500,
+                      ...sentimentStyle(item.sentiment),
+                      transition: "all 0.3s ease",
+                    }}>
+                      {item.sentiment}
+                    </span>
+                  )}
+
+                  {!item.sentiment && (
+                    <span style={{
+                      fontSize: "11px", padding: "2px 10px",
+                      borderRadius: "999px",
+                      background: isDark ? "rgba(255,255,255,0.04)" : "rgba(226,232,240,0.5)",
+                      border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(148,163,184,0.2)"}`,
+                      color: isDark ? "#334155" : "#cbd5e1",
+                      animation: "pulse 1.5s ease-in-out infinite",
+                    }}>
+                      analyzing...
+                    </span>
+                  )}
+
+                  {item.emotion && (
+                    <span style={{
+                      fontSize: "11px",
+                      color: isDark ? "#334155" : "#94a3b8",
+                      transition: "all 0.3s ease",
+                    }}>
+                      {emotionEmoji(item.emotion)} {item.emotion}
+                    </span>
+                  )}
                 </div>
 
+                {/* Title */}
                 <p style={{
                   fontSize: "14px", fontWeight: 500,
                   lineHeight: 1.5, marginBottom: "6px",
@@ -137,16 +171,19 @@ export default function ResultsTable({ items, isDark }: any) {
                   {item.url && <span style={{ color: isDark ? "#1e3a5f" : "#bfdbfe" }}>↗</span>}
                 </p>
 
+                {/* Summary */}
                 {item.summary && (
                   <p style={{
                     fontSize: "12px", lineHeight: 1.6,
                     color: isDark ? "#64748b" : "#94a3b8",
                     marginBottom: "8px",
+                    transition: "all 0.3s ease",
                   }}>
                     {item.summary}
                   </p>
                 )}
 
+                {/* Meta */}
                 {item.published_at && (
                   <p style={{ fontSize: "11px", color: isDark ? "#475569" : "#bfdbfe", margin: 0 }}>
                     {new Date(item.published_at).toLocaleDateString("en-IN", {
@@ -157,11 +194,18 @@ export default function ResultsTable({ items, isDark }: any) {
                 )}
               </div>
 
+              {/* Score */}
               <div style={{ textAlign: "right", flexShrink: 0 }}>
-                <div style={{ fontSize: "17px", fontWeight: 700, color: scoreColor(item.score), lineHeight: 1.2 }}>
-                  {(item.score * 100).toFixed(0)}%
+                <div style={{
+                  fontSize: "17px", fontWeight: 700,
+                  color: scoreColor(item.score), lineHeight: 1.2,
+                  transition: "all 0.3s ease",
+                }}>
+                  {item.score ? `${(item.score * 100).toFixed(0)}%` : "—"}
                 </div>
-                <div style={{ fontSize: "10px", color: isDark ? "#1e3a5f" : "#bfdbfe" }}>confidence</div>
+                <div style={{ fontSize: "10px", color: isDark ? "#1e3a5f" : "#bfdbfe" }}>
+                  {item.score ? "confidence" : ""}
+                </div>
               </div>
             </div>
           </div>
