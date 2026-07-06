@@ -175,14 +175,23 @@ export default function Home() {
 
         {/* ── HERO ── */}
         <div style={{ textAlign: "center", marginBottom: "clamp(28px, 5vw, 52px)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "clamp(12px, 2vw, 20px)", marginBottom: "clamp(12px, 3vw, 20px)" }}>
+          <img
+            src="/logo.svg"
+            alt="SocialPulse AI Logo"
+            style={{ width: "clamp(40px, 8vw, 72px)", height: "clamp(40px, 8vw, 72px)" }}
+          />
           <h1 className="glow-text" style={{
             fontSize: "clamp(36px, 10vw, 76px)",
-            fontWeight: 700, letterSpacing: "-0.03em",
-            marginBottom: "clamp(12px, 3vw, 20px)",
-            display: "block", lineHeight: 1.05,
+            fontWeight: 700,
+            letterSpacing: "-0.03em",
+            display: "block",
+            lineHeight: 1.05,
+            margin: 0,
           }}>
             SocialPulse
           </h1>
+        </div>
           <p style={{
             fontSize: "clamp(14px, 3.5vw, 18px)", fontWeight: 300,
             color: isDark ? "#475569" : "#64748b",
