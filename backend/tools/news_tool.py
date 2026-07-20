@@ -18,22 +18,32 @@ def fetch_news(topic: str, days_back: int = 1, max_results: int = 20) -> list[di
     "apiKey": NEWS_API_KEY,
     }
 
-    response = requests.get(url, params=params)
-    data = response.json()
+    try:
+        # NEW: 10s timeout so a hanging request can't stall the whole
+        # parallel fetch — the ThreadPoolExecutor waits for this future,
+        # so without a timeout a stuck source could hang indefinitely.
+        response = requests.get(url, params=params, timeout=10)
+        data = response.json()
 
-    if data.get("status") != "ok":
-        print(f"NewsAPI error: {data.get('message')}")
+        if data.get("status") != "ok":
+            print(f"NewsAPI error: {data.get('message')}")
+            return []
+
+        articles = []
+        for article in data.get("articles", []):
+            articles.append({
+                "source": "news",
+                "title": article.get("title", ""),
+                "text": article.get("description") or article.get("content") or "",
+                "url": article.get("url", ""),
+                "published_at": article.get("publishedAt", ""),
+                "author": article.get("source", {}).get("name", ""),
+            })
+
+        return articles
+    except requests.exceptions.Timeout:
+        print("NewsAPI error: request timed out after 10s")
         return []
-
-    articles = []
-    for article in data.get("articles", []):
-        articles.append({
-            "source": "news",
-            "title": article.get("title", ""),
-            "text": article.get("description") or article.get("content") or "",
-            "url": article.get("url", ""),
-            "published_at": article.get("publishedAt", ""),
-            "author": article.get("source", {}).get("name", ""),
-        })
-
-    return articles
+    except Exception as e:
+        print(f"NewsAPI error: {e}")
+        return []

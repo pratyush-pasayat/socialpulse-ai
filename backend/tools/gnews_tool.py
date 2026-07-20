@@ -14,7 +14,8 @@ def fetch_gnews(topic: str, max_results: int = 10) -> list[dict]:
     }
 
     try:
-        response = requests.get(url, params=params)
+        # NEW: 10s timeout — same reasoning as news_tool.py
+        response = requests.get(url, params=params, timeout=10)
         data = response.json()
 
         if "articles" not in data:
@@ -33,6 +34,9 @@ def fetch_gnews(topic: str, max_results: int = 10) -> list[dict]:
             })
 
         return articles
+    except requests.exceptions.Timeout:
+        print("GNews error: request timed out after 10s")
+        return []
     except Exception as e:
         print(f"GNews fetch error: {e}")
         return []

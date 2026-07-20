@@ -5,7 +5,7 @@ YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 
 def fetch_youtube(topic: str, max_results: int = 10) -> list[dict]:
     """Fetch YouTube video titles + top comments for a topic — real public sentiment."""
-    
+
     # Step 1: Search videos related to topic
     search_url = "https://www.googleapis.com/youtube/v3/search"
     search_params = {
@@ -18,7 +18,8 @@ def fetch_youtube(topic: str, max_results: int = 10) -> list[dict]:
     }
 
     try:
-        search_response = requests.get(search_url, params=search_params)
+        # NEW: 10s timeout — same reasoning as news_tool.py
+        search_response = requests.get(search_url, params=search_params, timeout=10)
         search_data = search_response.json()
 
         if "items" not in search_data:
@@ -29,7 +30,7 @@ def fetch_youtube(topic: str, max_results: int = 10) -> list[dict]:
         for item in search_data.get("items", []):
             video_id = item["id"].get("videoId")
             snippet = item.get("snippet", {})
-            
+
             results.append({
                 "source": "youtube",
                 "title": snippet.get("title", ""),
@@ -45,6 +46,9 @@ def fetch_youtube(topic: str, max_results: int = 10) -> list[dict]:
                 results.extend(comments)
 
         return results[:max_results]
+    except requests.exceptions.Timeout:
+        print("YouTube error: search request timed out after 10s")
+        return []
     except Exception as e:
         print(f"YouTube fetch error: {e}")
         return []
@@ -62,7 +66,8 @@ def fetch_video_comments(video_id: str, max_comments: int = 2) -> list[dict]:
     }
 
     try:
-        response = requests.get(comments_url, params=params)
+        # NEW: 10s timeout — same reasoning as news_tool.py
+        response = requests.get(comments_url, params=params, timeout=10)
         data = response.json()
 
         if "items" not in data:
@@ -80,6 +85,9 @@ def fetch_video_comments(video_id: str, max_comments: int = 2) -> list[dict]:
                 "author": comment.get("authorDisplayName", ""),
             })
         return results
+    except requests.exceptions.Timeout:
+        # Comments might be slow — that's fine, just skip this video's comments
+        return []
     except Exception as e:
         # Comments might be disabled on some videos — that's fine, just skip
         return []
