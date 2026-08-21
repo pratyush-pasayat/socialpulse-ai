@@ -1,12 +1,15 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from dotenv import load_dotenv
 from agents.orchestrator import run_pipeline
-from tools.supabase_tool import get_search_history
+from agents.trending_agent import refresh_trending
+from tools.supabase_tool import get_search_history, get_trending_topics, save_trending_topics
 
 load_dotenv()
+
+CRON_SECRET = os.getenv("CRON_SECRET")
 
 app = FastAPI(
     title="SocialPulse AI",
@@ -21,11 +24,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# NEW: gzip-compress responses over ~500 bytes — shrinks the JSON payload
-# sent to the browser (your /analyze responses can be several KB), which
-# helps load time especially on slower connections. No behavior change,
-# purely a transport-level optimization — the frontend receives the same
-# JSON either way, the browser decompresses it automatically.
 app.add_middleware(GZipMiddleware, minimum_size=500)
 
 
@@ -50,6 +48,38 @@ def history(limit: int = 10):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+# ── NEW: trending topics ─────────────────────────────────
+
+@app.get("/trending")
+def trending():
+    """
+    Public, read-only endpoint. Serves the CACHED trending topics list —
+    never triggers a live fetch itself, so it's instant and doesn't touch
+    your API quotas no matter how many visitors hit it. Includes
+    updated_at so the frontend can show e.g. "Updated 2 hours ago".
+    """
+    return get_trending_topics()
+
+
+@app.post("/refresh-trending")
+def refresh_trending_endpoint(x_cron_secret: str = Header(default=None)):
+    """
+    Protected endpoint — only your scheduled cron job should call this,
+    not the frontend and not the public. It re-fetches broad content from
+    all 4 sources, extracts new topics, and overwrites the cached list.
+
+    Protection: requires an `X-Cron-Secret` header matching CRON_SECRET
+    (set in your .env / Render environment variables). Without this,
+    anyone who found this URL could spam it and burn your API quota.
+    """
+    if not CRON_SECRET or x_cron_secret != CRON_SECRET:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    topics = refresh_trending()
+    save_trending_topics(topics)
+    return {"status": "refreshed", "topics": topics}
 
 
 # NOTE: the old /analyze-stream (SSE) endpoint was removed here — it was
